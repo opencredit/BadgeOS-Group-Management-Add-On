@@ -230,7 +230,7 @@ function badgeos_schools_control_user_roles($all_roles) {
 
     $screen = get_current_screen();
 
-    if($screen->id == 'user'){
+    if ( $screen && $screen->id == 'user' ) {
         $user_role = badgeos_get_user_role();
         if($user_role == "school_admin"){
             foreach($all_roles as $role => $capabilities){
