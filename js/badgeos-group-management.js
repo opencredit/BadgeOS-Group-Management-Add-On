@@ -42,4 +42,5 @@ jQuery(function ($){
             alert( 'There was an issue requesting membership, please contact your site administrator' );
         }
     } );
+
 });

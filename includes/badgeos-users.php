@@ -50,7 +50,7 @@ function badgeos_add_capabilities_to_user_roles( ) {
     $role_school_admin->add_cap( 'edit_others_posts' );
 
     // Add capabilities to Author role
-    $role_author = get_role( 'author' );
+    $role_author = get_role( get_option('badgeos_group_management_teacher_role') );
     $role_author->add_cap( 'create_users' );
     $role_author->add_cap( 'list_users' );
     $role_author->add_cap( 'edit_users' );
@@ -73,7 +73,7 @@ function badgeos_remove_menus() {
     global $submenu;
 
     // If the user does not have access to following menu page
-    if(is_user_logged_in() && (current_user_can('school_admin') || current_user_can('author'))) {
+    if(is_user_logged_in() && (current_user_can('school_admin') || current_user_can(get_option('badgeos_group_management_teacher_role')))) {
 
         remove_menu_page( 'shortcodes-ultimate' );
         remove_menu_page( 'edit.php?post_type=acf' );
@@ -98,7 +98,7 @@ function badgeos_remove_menus() {
         //Remove "Manage Signup" submenu on school admin & authors dashboard
         unset($submenu['users.php'][17]);
 
-        if(current_user_can('author')){
+        if(current_user_can(get_option('badgeos_group_management_teacher_role'))){
             remove_menu_page( 'bp_invite_codes_settings' );
             remove_menu_page( 'badgeos_badgeos' );
             remove_submenu_page( 'users.php', 'user-new.php' );
@@ -118,7 +118,7 @@ add_action( 'admin_menu', 'badgeos_remove_menus',999);
  */
 function badgeos_get_students($teacher_id){
     $args = array(
-        'role'         => 'subscriber',
+        'role'         => get_option('badgeos_group_management_student_role'),
         'meta_key'     => 'teacher_id',
         'meta_value'   => absint( $teacher_id ),
         'fields'       => 'ID'
@@ -160,9 +160,9 @@ function badgeos_get_school_id(){
 function badgeos_get_teacher_id(){
 
     // getting teacher id for user. If user not logged in result empty
-    if(is_user_logged_in() && badgeos_get_user_role()=="author"){
+    if(is_user_logged_in() && badgeos_get_user_role()==get_option('badgeos_group_management_teacher_role')){
         $teacher_id = get_current_user_id();
-    }elseif(is_user_logged_in() && badgeos_get_user_role()=="subscriber"){
+    }elseif(is_user_logged_in() && badgeos_get_user_role()==get_option('badgeos_group_management_student_role')){
         $teacher_id = get_user_meta(get_current_user_id(), 'teacher_id', true);
     }
     return absint( $teacher_id );
@@ -203,7 +203,7 @@ function badgeos_get_user_role( $user_id = 0 ) {
  */
 function bp_disable_group_creation_for_students(){
 
-    if(badgeos_get_user_role()=="subscriber"){
+    if(badgeos_get_user_role()==get_option('badgeos_group_management_student_role')){
         $can_create = false;
     }else{
         $can_create = true;
@@ -224,19 +224,23 @@ add_filter('bp_user_can_create_groups','bp_disable_group_creation_for_students')
  */
 function badgeos_schools_control_user_roles($all_roles) {
 
+    if (!function_exists('get_current_screen')) {
+        require_once(ABSPATH . 'wp-admin/includes/screen.php');
+    }
+
     $screen = get_current_screen();
 
     if($screen->id == 'user'){
         $user_role = badgeos_get_user_role();
         if($user_role == "school_admin"){
             foreach($all_roles as $role => $capabilities){
-                if($role != 'author'){
+                if($role != get_option('badgeos_group_management_teacher_role')){
                     unset($all_roles[$role]);
                 }
             }
-        }elseif($user_role == "author"){
+        }elseif($user_role == get_option('badgeos_group_management_teacher_role')){
             foreach($all_roles as $role => $capabilities){
-                if($role != 'subscriber'){
+                if($role != get_option('badgeos_group_management_student_role')){
                     unset($all_roles[$role]);
                 }
             }
@@ -256,7 +260,7 @@ add_filter('editable_roles', 'badgeos_schools_control_user_roles');
 function badgeos_create_school_form_submission(){
 
     global $add_user_errors;
-
+    global $wpdb;
     if ( isset($_REQUEST['action']) && 'badgeos_create_school' == $_REQUEST['action'] ) {
         check_admin_referer( 'create-user', '_wpnonce_create-user' );
 
@@ -458,8 +462,4 @@ badgeos_create_school_form_submission();
         <?php submit_button( __( 'Add New School '), 'primary', 'createuser', true, array( 'id' => 'create_school' ) ); ?>
     </form>
     <?php
-    }
-
-
-
-
+}
