@@ -3,11 +3,9 @@
  * Plugin Name: BadgeOS Group Management Add-On
  * Plugin URI: http://www.badgeos.org/
  * Description: This BadgeOS add-on integrates BadgeOS features with Schools.
- * Author: LearningTimes, LLC
- * Author URI: https://credly.com/
- * Version: 1.0.0
- * License: GNU AGPL
  * Text Domain: badgeos-group-management
+ * Author: LearningTimes
+ * Version: 1.0.1.1
  */
 
 class BadgeOS_Group_Management {
@@ -51,10 +49,17 @@ class BadgeOS_Group_Management {
         ob_start();
 
 		if ( $this->meets_requirements() ) {
-			require_once( $this->directory_path . '/includes/badgeos-users.php' );
-			require_once( $this->directory_path . '/includes/submission-filters.php' );
-			require_once( $this->directory_path . '/includes/badgeos-user-list.php' );
-			require_once( $this->directory_path . '/includes/badgeos-group-management-functions.php' );
+
+			require_once( $this->directory_path . '/includes/badgeos-group-management-roles.php' );
+
+			if($this->check_group_management_group_roles_current_env() != false){
+
+				require_once( $this->directory_path . '/includes/badgeos-users.php' );
+				require_once( $this->directory_path . '/includes/submission-filters.php' );
+				require_once( $this->directory_path . '/includes/badgeos-user-list.php' );
+				require_once( $this->directory_path . '/includes/badgeos-group-management-functions.php' );
+
+			}
 		}
 	}
 
@@ -88,8 +93,80 @@ class BadgeOS_Group_Management {
      */
     public function badgeos_group_management_menu(){
         //Add Badgeos add new school menu in admin dashboard
-        add_menu_page('BadgeOS Group Management Plugin','BadgeOS Group Management','administrator', 'badgeos-group-management', 'badgeos_schools_creation',$GLOBALS['badgeos']->directory_url . 'images/badgeos_icon.png');
+        add_menu_page('BadgeOS Group Management Plugin','BadgeOS Group Management','administrator', 'badgeos-group-management-settings', 'badgeos_group_roles_setup_page',$GLOBALS['badgeos']->directory_url . 'images/badgeos_icon.png');
+
+		// Create submenu for Roles setup
+		add_submenu_page( 'badgeos-group-management-settings', 'Roles' , 'Roles', 'administrator', 'badgeos-group-management-settings', 'badgeos_group_roles_setup_page' );
+
+		if($this->check_group_management_group_roles_current_env() != false) {
+			//Show create school page
+			add_submenu_page('badgeos-group-management-settings', 'Create Schools', 'Create Schools', 'administrator', 'badgeos-group-management', 'badgeos_schools_creation');
+		}
+
     }
+
+
+	/**
+	 * Check group management roles from admin screen
+	 *
+	 * @since 1.0.1
+	 *
+	 */
+	public function check_group_management_group_roles_current_env(){
+
+		//Get all roles from present environment
+		$all_roles = wp_roles()->roles;
+
+		$editable_roles = apply_filters( 'editable_roles', $all_roles );
+
+		$roles = array();
+
+		foreach ($editable_roles as $role_name => $role_info){
+			array_push($roles, $role_name);
+		}
+
+		$teacher_option_name = 'badgeos_group_management_teacher_role';
+		$student_option_name = 'badgeos_group_management_student_role';
+
+		$teacher_role = get_option($teacher_option_name);
+		$student_role = get_option($student_option_name);
+
+		//If group management roles doesnot exists in default setup options
+		if( !$teacher_role && !$student_role){
+
+			if( in_array('subscriber', $roles) && in_array('author' , $roles)){
+
+				//Setup group management roles if subscriber & author role exists in current wordpress environment
+				add_option( $teacher_option_name , 'author' , null , 'yes' );
+				add_option( $student_option_name , 'subscriber' , null , 'yes' );
+
+				return true;
+
+			}else{
+
+				//If the roles does not exists in current wordpress roles
+				return false;
+			}
+
+		}else{
+
+			/*
+             * If the role present in user defined roles values in wp_option table
+             * But not in current wordpress environment all roles values
+             * May be, These roles are removed by some other plugins used
+             */
+
+			if( current_user_can('administrator') ){
+				if(!in_array($student_role , $roles) || !in_array($teacher_role , $roles)){
+					return false;
+				}
+			}
+
+			return true;
+
+		}
+	}
+
 
 	/**
 	 * Activation hook for the plugin.
@@ -150,6 +227,13 @@ class BadgeOS_Group_Management {
 
             // Deactivate our plugin
             deactivate_plugins( $this->basename );
+
+		} else {
+
+			if($this->check_group_management_group_roles_current_env() == false) {
+				//display the admin notice
+				printf(__('<div class="notice notice-error"><p>Note: BadgeOS Group Management is almost ready to use. You must <a href="%s">define your role structure</a> for the plugin to work.</p></div>', 'badgeos'), admin_url('admin.php?page=badgeos-group-management-settings'));
+			}
 		}
 	}
 

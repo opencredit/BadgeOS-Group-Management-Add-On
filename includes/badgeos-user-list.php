@@ -49,6 +49,8 @@ function badgeos_get_school_name_column_content($value, $column_name, $user_id) 
             }
             break;
         default:
+            return $value;
+            break;
     }
 }
 add_action('manage_users_custom_column',  'badgeos_get_school_name_column_content', 10, 3);
@@ -64,7 +66,7 @@ add_action('manage_users_custom_column',  'badgeos_get_school_name_column_conten
  */
 function badgeos_display_users_lists_by_usermeta($query){
 
-    $users_list_page = (function_exists('get_current_screen'))?get_current_screen()->id:"";
+    $users_list_page = (function_exists('get_current_screen'))? get_current_screen()->id :"";
 
     if($users_list_page=='users' || $_GET['page'] == 'bp-signups'){
         // Get user values
@@ -83,7 +85,7 @@ function badgeos_display_users_lists_by_usermeta($query){
                 }
                 break;
 
-            case 'author':
+            case get_option('badgeos_group_management_teacher_role'):
                 //Get author and subscriber's lists belongs to author
                 $query->query_from .= " JOIN wp_usermeta M ON ( wp_users.ID = M.user_id )";
                 $query->query_where .= ' AND (( M.meta_key = "teacher_id" AND M.meta_value = '.$user_id.')) AND ( wp_users.user_status != 2 )';
@@ -94,7 +96,6 @@ function badgeos_display_users_lists_by_usermeta($query){
                 break;
         }
     }
-
 
     return $query;
 }
@@ -118,6 +119,9 @@ function badgeos_modify_users_views_by_user_role( $views )
     $user_role = badgeos_get_user_role(); // User role for currently logged in user
     $school_id = absint( badgeos_get_school_id() ); // School ID of logged in user
     $user_id = absint( get_current_user_id() );     // Current User ID
+    $teacher_role = get_option('badgeos_group_management_teacher_role');
+    $student_role = get_option('badgeos_group_management_student_role');
+
     $key = null;
     $value = null;
     $total_users = 0;
@@ -125,7 +129,7 @@ function badgeos_modify_users_views_by_user_role( $views )
     if($user_role == "school_admin"){
         $key = 'school_id';
         $value = $school_id;
-    }elseif($user_role == "author"){
+    }elseif($user_role == $teacher_role){
         $key = 'teacher_id';
         $value = $user_id;
     }
@@ -147,10 +151,10 @@ function badgeos_modify_users_views_by_user_role( $views )
 
         //Get specific role count - If login user role "school_admin"
         foreach($users as $user){
-            if($user->roles[0] == "author"){
+            if($user->roles[0] == $teacher_role){
                 $author[] = $user->roles[0];
                 $author_count = count($author);
-            }else if($user->roles[0] == "subscriber"){
+            }else if($user->roles[0] == $student_role){
                 $subscriber[] = $user->roles[0];
                 $subscriber_count = count($subscriber);
             }
@@ -172,8 +176,9 @@ function badgeos_modify_users_views_by_user_role( $views )
                 $class = ' class="current"';
             }
             $name = translate_user_role( $name );
-            $avail_roles['author'] = $author_count;
-            $avail_roles['subscriber'] = $subscriber_count;
+
+            $avail_roles[$teacher_role] = $author_count;
+            $avail_roles[$student_role] = $subscriber_count;
 
             /* translators: User role name with count */
             $name = sprintf( __('%1$s <span class="count">(%2$s)</span>'), $name, number_format_i18n( $avail_roles[$this_role] ) );
@@ -196,18 +201,24 @@ function badgeos_modify_users_views_by_user_role( $views )
     switch($user_role){
         case 'school_admin':
             //Get author and subscriber lists belongs to school admin, remain options are unset
-            unset($views['administrator']);
-            unset($views['school_admin']);
-            unset($views['registered']);
-            unset($views['pending']);
+            foreach ($views as $roleName => $link){
+                if($roleName == 'all' || $teacher_role == $roleName || $student_role == $roleName){
+                }else{
+                   unset($views[$roleName]);
+                }
+            }
+
             break;
 
-        case 'author':
-            //Get author and subscriber's lists belongs to author, remain options are unset
-            unset($views['administrator']);
-            unset($views['author']);
-            unset($views['school_admin']);
-            unset($views['registered']);
+        case $teacher_role:
+            //Get subscriber's lists belongs to author, remain options are unset
+            foreach ($views as $roleName => $link){
+                if ($roleName == 'all' || $student_role == $roleName){
+                }else{
+                    unset($views[$roleName]);
+                }
+            }
+
             break;
         default:
     }
