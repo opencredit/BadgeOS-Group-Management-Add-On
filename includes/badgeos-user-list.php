@@ -68,7 +68,7 @@ function badgeos_display_users_lists_by_usermeta($query){
 
     $users_list_page = (function_exists('get_current_screen'))? get_current_screen()->id :"";
 
-    if($users_list_page=='users' || $_GET['page'] == 'bp-signups'){
+    if($users_list_page=='users' || ( isset( $_GET['page'] ) && $_GET['page'] == 'bp-signups') ) {
         // Get user values
         $role = badgeos_get_user_role();      // User role for currently logged in user
         $school_id = absint( badgeos_get_school_id() ); // School ID of logged in user
@@ -177,8 +177,13 @@ function badgeos_modify_users_views_by_user_role( $views )
             }
             $name = translate_user_role( $name );
 
-            $avail_roles[$teacher_role] = $author_count;
-            $avail_roles[$student_role] = $subscriber_count;
+            if ( isset( $author_count ) ) {
+	            $avail_roles[$teacher_role] = $author_count;
+            }
+
+            if ( isset( $subscriber_count ) ) {
+	            $avail_roles[$student_role] = $subscriber_count;
+            }
 
             /* translators: User role name with count */
             $name = sprintf( __('%1$s <span class="count">(%2$s)</span>'), $name, number_format_i18n( $avail_roles[$this_role] ) );
