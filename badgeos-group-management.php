@@ -5,7 +5,7 @@
  * Description: This BadgeOS add-on integrates BadgeOS features with Schools.
  * Text Domain: badgeos-group-management
  * Author: LearningTimes
- * Version: 1.0.1.1
+ * Version: 1.0.1.2
  */
 
 class BadgeOS_Group_Management {

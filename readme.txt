@@ -1,10 +1,10 @@
 ﻿=== BadgeOS Group Management Add-on ===
-Contributors: badgeos, learningtimes, credly, asahitechnologies
+Contributors: badgeos, learningtimes, credly, asahitechnologies, rahilwazir, wooninjas
 Donate link: http://badgeos.org/contribute/donate/
 Tags: badge, badges, openbadges, credly, OBI, mozilla, open badges, achievement, award, reward, engagement, submission, nomination, API, open credit, credit, badgeOS, buddypress, invitation, join, groups, register
 Requires at least: 3.5
-Tested up to: 4.5.3
-Stable tag: 1.0.1.1
+Tested up to: 4.8.3
+Stable tag: 1.0.1.2
 License: GNU AGPLv3
 License URI: http://www.gnu.org/licenses/agpl-3.0.html
 
@@ -90,6 +90,9 @@ Thanks for asking!  Please do share back code modifications or enhancements you 
 3. A group filter is also available within the Reports module.
 
 == Changelog ==
+= 1.0.1.2 =
+* Fixed: PHP warnings and notices
+
 = 1.0.1.1 =
 * Fixed: Fatal error Call to undefined function check_group_management_group_roles()
 

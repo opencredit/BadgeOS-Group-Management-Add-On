@@ -1,4 +1,7 @@
 # BadgeOS Group Management Add-on
+Enhances sites running BuddyPress and BadgeOS by joining users to one or more specified groups when they use a special Invite Code to join your site.
+
+## Description
 The Group Management Add-on for BadgeOS evolved because school districts wanted to build one BadgeOS site, set up various achievements and learning pathways for all students
 and give principals and teachers the ability to manage only their student’s submissions. Group Management allows that!
 
@@ -10,7 +13,7 @@ On the back end “School Admins” and “Teachers” can also issue to or revo
 ## Changelog
 
 ### 1.0.1.2
-- Fixed PHP warnings and notices
+- Fixed: PHP warnings and notices
 
 ### 1.0.1.1
 - Fixed: Fatal error Call to undefined function check_group_management_group_roles()
